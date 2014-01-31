@@ -1,0 +1,157 @@
+TABLE: awards
+   id
+   badge_id
+   contributor_id
+   contest_id
+   created_at
+   updated_at
+
+TABLE: badges
+   id
+   name
+   description
+   image_name
+   created_at
+   updated_at
+
+TABLE: codes
+   id
+   submission_id
+   body
+
+TABLE: comments
+   id
+   body
+   submission_id
+   contributor_id
+   created_at
+   updated_at
+
+TABLE: community_profiles
+   profile_id
+   given_name
+   family_name
+   organization
+   email_address
+   biography
+   is_suppress_email
+   is_suppress_organization
+   image_path
+   status
+   created_at
+   updated_at
+   is_hide_email
+   newsgroup_email
+   is_suppress_country
+   professional_interests
+   aim_login
+   msn_login
+   yahoo_login
+   icq_login
+   latitude
+   longitude
+   country
+
+TABLE: contests
+   id
+   title
+   internal
+   newsgroup_thread_url
+   statistics_url
+   welcome_message
+   instructions
+   sample_code_url
+   test_suite_id
+   created_at
+   updated_at
+   private_text
+   contest_type
+
+TABLE: contributors
+   id
+   profile_id
+   created_at
+   updated_at
+   type
+   author
+   email
+
+TABLE: external_admins
+   id
+   contest_id
+   profile_id
+   created_at
+   updated_at
+
+TABLE: front_pages
+   id
+   contest_news
+   created_at
+   updated_at
+   general_news
+
+TABLE: messages
+   id
+   contest_id
+   body
+   created_at
+   updated_at
+
+TABLE: pages
+   id
+   type
+   contest_id
+   body
+   created_at
+   updated_at
+
+TABLE: participants
+   id
+   contest_id
+   profile_id
+   status
+   user_notes
+   created_at
+   updated_at
+
+TABLE: process_locks
+   id
+   process
+   locked
+   locker_id
+   created_at
+   updated_at
+
+TABLE: schema_migrations
+   version
+
+TABLE: submissions
+   id
+   title
+   status
+   contest_id
+   contributor_id
+   submission_id
+   result
+   cpu
+   score
+   scored_at
+   rank
+   initial_rank
+   scoring_engine_id
+   notify_when_scored
+   created_at
+   updated_at
+
+TABLE: visibilities
+   id
+   title
+   description
+   contest_id
+   contributor_code_visible
+   contributor_score_visible
+   public_code_visible
+   public_score_visible
+   created_at
+   updated_at
+   start_time
