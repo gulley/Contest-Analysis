@@ -1,6 +1,7 @@
 function getdbtables(conn)
-%GETDBTABLES
+%GETDBTABLES Display database tables
 %   getdbtables(conn)
+%   Get the tables from the database associated with the connection conn
 
 d = dmd(conn);
 ctg = get(conn,'Catalog');
