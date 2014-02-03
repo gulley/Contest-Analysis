@@ -58,7 +58,7 @@ for i = length(d):-1:1
 end
 
 for i = 1:length(d)
-    d(i).new_lines = d(i).lines(find(firstTimeIndexList(d(i).lines)==i));
+    d(i).new_lines = d(i).lines(firstTimeIndexList(d(i).lines)==i);
     lastTimeIndexList(d(i).lines) = i;
 end
 
