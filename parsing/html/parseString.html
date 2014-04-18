@@ -1,0 +1,574 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>parseString</title><meta name="generator" content="MATLAB 8.3"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-12-02"><meta name="DC.source" content="parseString.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">function</span> node = parseString( inputString )
+    <span class="comment">% This file understands the structure of the mtreemex table and the</span>
+    <span class="comment">% construction syntax of allof the parse tree node types.</span>
+
+    parseLibrary = <span class="string">'ParseTree;'</span>;
+    <span class="keyword">if</span> isempty(strfind(path,parseLibrary))
+        addpath(parseLibrary);
+    <span class="keyword">end</span>
+
+    <span class="keyword">global</span> nodeNames
+    <span class="keyword">if</span>(isempty(nodeNames))
+        nodeNames = mtreemex;
+    <span class="keyword">end</span>
+
+    <span class="comment">% Table column meanings</span>
+    <span class="comment">% 1 = node type</span>
+    <span class="comment">% 2 = left child</span>
+    <span class="comment">% 3 = right child</span>
+    <span class="comment">% 4 = next</span>
+    <span class="comment">% 8 = index into strings</span>
+    <span class="comment">% 11 = start index in inputString</span>
+    <span class="comment">% 12 = end index in inputString</span>
+
+    <span class="comment">% chew on a row so comments don't need to be transposed</span>
+    <span class="keyword">if</span> iscolumn(inputString)
+        inputString = inputString';
+    <span class="keyword">end</span>
+
+    [table,~,strings] = mtreemex(inputString,<span class="string">'-comments'</span>,<span class="string">'-whitespace'</span>);
+
+    list = createList(1,table,strings,inputString);
+    <span class="keyword">if</span> 1 == length(list)
+        node = list{1};
+    <span class="keyword">else</span>
+        node = StatementBlock(list);
+    <span class="keyword">end</span>
+
+<span class="keyword">end</span>
+
+<span class="keyword">function</span> node = createTree(index,table,strings,inputString)
+    <span class="keyword">global</span> nodeNames
+
+    nodeType = nodeNames{table(index,1)};
+    <span class="keyword">switch</span> nodeType
+        <span class="keyword">case</span> {<span class="string">'AND'</span>,<span class="string">'ANDAND'</span>,<span class="string">'OR'</span>,<span class="string">'OROR'</span>,<span class="string">'DIV'</span>,<span class="string">'MUL'</span>,<span class="string">'PLUS'</span>,<span class="string">'MINUS'</span>,<span class="string">'EXP'</span>,<span class="string">'DOTMUL'</span>,<span class="string">'DOTEXP'</span>}
+            leftOperand  = createLeftTree(index,table,strings,inputString);
+            rightOperand = createRightTree(index,table,strings,inputString);
+            node = BinaryOperator(nodeType,leftOperand,rightOperand);
+        <span class="keyword">case</span> <span class="string">'ANON'</span>
+            ids  = CommaSeperatedList(createList(table(index,2),table,strings,inputString));
+            expression = createRightTree(index,table,strings,inputString);
+            node = AnonymousFunctionDefinition(ids,expression);
+        <span class="keyword">case</span> <span class="string">'ANONID'</span>
+            text = inputString(table(index,11): table(index,12))';
+            node = Literal(<span class="string">'ID'</span>,text);
+        <span class="keyword">case</span> <span class="string">'AT'</span>
+            name = createLeftTree(index,table,strings,inputString);
+            node = At(name);
+        <span class="keyword">case</span> <span class="string">'ATTR'</span>
+            attributeName = createLeftTree(index,table,strings,inputString);
+            attributeValue = createRightTree(index,table,strings,inputString);
+            node = Attribute(attributeName,attributeValue);
+        <span class="keyword">case</span> <span class="string">'ATTRIBUTES'</span>
+            node = CommaSeperatedList(createList(table(index,2),table,strings,inputString));
+        <span class="keyword">case</span> <span class="string">'BLKCOM'</span>
+            text = inputString(table(index,11): table(index,12))';
+            node = BlockComment(text);
+        <span class="keyword">case</span> <span class="string">'BREAK'</span>
+            node = Break;
+        <span class="keyword">case</span> <span class="string">'CALL'</span>
+            name = createLeftTree(index,table,strings,inputString);
+            inputs = CommaSeperatedList(createList(table(index,3),table,strings,inputString));
+            node = FunctionCall(name,inputs);
+        <span class="keyword">case</span> {<span class="string">'CASE'</span>,<span class="string">'OTHERWISE'</span>}
+            name = createLeftTree(index,table,strings,inputString);
+            body = StatementBlock(createList(table(index,3),table,strings,inputString));
+            node = Case(name,body);
+        <span class="keyword">case</span> <span class="string">'CATCH'</span>
+            node = Junk(<span class="string">'catch'</span>,[]);
+        <span class="keyword">case</span> <span class="string">'CELL'</span>
+            var  = createLeftTree(index,table,strings,inputString);
+            contents = CommaSeperatedList(createList(table(index,3),table,strings,inputString));
+            node = CellArray(var, contents);
+        <span class="keyword">case</span> <span class="string">'CLASSDEF'</span>
+            cexpr = table(index,2);
+            classNames = createRightTree(cexpr,table,strings,inputString);
+            blocks = StatementBlock(createList(table(index,3),table,strings,inputString));
+            node = ClassDef(classNames,blocks);
+        <span class="keyword">case</span> <span class="string">'COLON'</span>
+            leftNode  = createLeftTree(index,table,strings,inputString);
+            rightNode = createRightTree(index,table,strings,inputString);
+            node = ColonOperator(leftNode,rightNode);
+        <span class="keyword">case</span> <span class="string">'COMMENT'</span>
+            text = inputString(table(index,11): table(index,12));
+            node = Comment(text);
+        <span class="keyword">case</span> <span class="string">'CONTINUE'</span>
+            node = Continue;
+        <span class="keyword">case</span> <span class="string">'DCALL'</span>
+            name = createLeftTree(index,table,strings,inputString);
+            args = CommaSeperatedList(createList(table(index,3),table,strings,inputString));
+            node = Command(name,args);
+        <span class="keyword">case</span> <span class="string">'DOT'</span>
+            leftNode  = createLeftTree(index,table,strings,inputString);
+            rightNode = createRightTree(index,table,strings,inputString);
+            node = Dot(leftNode,rightNode);
+        <span class="keyword">case</span> <span class="string">'DOTLP'</span>
+            name  = createLeftTree(index,table,strings,inputString);
+            contents = CommaSeperatedList(createList(table(index,3),table,strings,inputString));
+            node = DotLP(name,contents);
+        <span class="keyword">case</span> {<span class="string">'EXPR'</span>,<span class="string">'PARENS'</span>}
+            <span class="comment">% expr is a tofu node. We simply move on to its only child node</span>
+            node = createLeftTree(index,table,strings,inputString);
+        <span class="keyword">case</span> <span class="string">'EQUALS'</span>
+            leftHandSide  = createLeftTree(index,table,strings,inputString);
+            rightHandSide = createRightTree(index,table,strings,inputString);
+            node = AssignmentStatement(leftHandSide,rightHandSide);
+        <span class="keyword">case</span> <span class="string">'FIELD'</span>
+            node = Field(Literal(<span class="string">'FIELD'</span>,strings{table(index,8)}));
+        <span class="keyword">case</span> <span class="string">'FOR'</span>
+            loop = table(index,2);
+            loopVar = createLeftTree(loop,table,strings,inputString);
+            loopRange = createRightTree(loop,table,strings,inputString);
+            loopBody = StatementBlock(createList(table(index,3),table,strings,inputString));
+            node = ForLoop(loopVar,loopRange,loopBody);
+        <span class="keyword">case</span> <span class="string">'FUNCTION'</span>
+            headerEtc = table(index,2);
+            outputs  = CommaSeperatedList(createList(table(headerEtc,2),table,strings,inputString));
+            inputEtc = table(headerEtc,3);
+            name   = createLeftTree(inputEtc,table,strings,inputString);
+            inputs = CommaSeperatedList(createList(table(inputEtc,3),table,strings,inputString));
+            body    = StatementBlock(createList(table(index,3),table,strings,inputString));
+            node = FunctionDefinition(name,outputs,inputs,body);
+        <span class="keyword">case</span> <span class="string">'GLOBAL'</span>
+            varNames = CommaSeperatedList(createList(table(index,2),table,strings,inputString));
+            node = Global(varNames);
+        <span class="keyword">case</span> <span class="string">'IF'</span>
+            ifBlocks = StatementBlock(createList(table(index,2),table,strings,inputString));
+            node = IfStatement(ifBlocks);
+        <span class="keyword">case</span> {<span class="string">'IFHEAD'</span>,<span class="string">'ELSE'</span>,<span class="string">'ELSEIF'</span>}
+            condition  = createLeftTree(index,table,strings,inputString);
+            body = StatementBlock(createList(table(index,3),table,strings,inputString));
+            node = IfBlock(condition,body);
+        <span class="keyword">case</span> {<span class="string">'INT'</span>,<span class="string">'ID'</span>,<span class="string">'STRING'</span>,<span class="string">'DOUBLE'</span>}
+            node = Literal(nodeType,strings{table(index,8)});
+        <span class="keyword">case</span> {<span class="string">'LB'</span>,<span class="string">'LC'</span>,<span class="string">'LP'</span>}
+            contents  = CommaSeperatedList(createList(table(index,2),table,strings,inputString));
+            node = Catenation(nodeType,contents);
+        <span class="keyword">case</span> {<span class="string">'LT'</span>,<span class="string">'GT'</span>,<span class="string">'LE'</span>,<span class="string">'GE'</span>,<span class="string">'EQ'</span>,<span class="string">'NE'</span>}
+            leftOperand  = createLeftTree(index,table,strings,inputString);
+            rightOperand = createRightTree(index,table,strings,inputString);
+            node = Compare(nodeType,leftOperand,rightOperand);
+        <span class="keyword">case</span> <span class="string">'METHODS'</span>
+            attributes = createLeftTree(index,table,strings,inputString);
+            contents = StatementBlock(createList(table(index,3),table,strings,inputString));
+            node = Methods(attributes,contents);
+        <span class="keyword">case</span> <span class="string">'NOT'</span>
+            <span class="keyword">if</span>(0 == table(index,2));
+                node = Literal(<span class="string">'NOT'</span>,<span class="string">'~'</span>);
+            <span class="keyword">else</span>
+                operand  = createLeftTree(index,table,strings,inputString);
+                node = UnaryOperator(nodeType,operand);
+            <span class="keyword">end</span>
+        <span class="keyword">case</span> <span class="string">'PERSISTENT'</span>
+            varNames = CommaSeperatedList(createList(table(index,2),table,strings,inputString));
+            node = Persistent(varNames);
+        <span class="keyword">case</span> <span class="string">'PRINT'</span>
+            statement  = createLeftTree(index,table,strings,inputString);
+            node = AutoPrint(statement);
+        <span class="keyword">case</span> <span class="string">'PROPERTIES'</span>
+            attributes = createLeftTree(index,table,strings,inputString);
+            contents = StatementBlock(createList(table(index,3),table,strings,inputString));
+            node = Properties(attributes,contents);
+        <span class="keyword">case</span> <span class="string">'PROTO'</span>
+            headerEtc = table(index,2);
+            outputs  = CommaSeperatedList(createList(table(headerEtc,2),table,strings,inputString));
+            inputEtc = table(headerEtc,3);
+            name   = createLeftTree(inputEtc,table,strings,inputString);
+            inputs = CommaSeperatedList(createList(table(inputEtc,3),table,strings,inputString));
+            body    = [];
+            node = FunctionDefinition(name,outputs,inputs,body);
+        <span class="keyword">case</span> <span class="string">'RETURN'</span>
+            node = Return;
+        <span class="keyword">case</span> <span class="string">'ROW'</span>
+            node  = CommaSeperatedList(createList(table(index,2),table,strings,inputString));
+        <span class="keyword">case</span> <span class="string">'SUBSCR'</span>
+            varName    = createLeftTree(index,table,strings,inputString);
+            subscripts = CommaSeperatedList(createList(table(index,3),table,strings,inputString));
+            node = Subscript(varName,subscripts);
+        <span class="keyword">case</span> <span class="string">'SWITCH'</span>
+            switchVar = createLeftTree(index,table,strings,inputString);
+            cases = StatementBlock(createList(table(index,3),table,strings,inputString));
+            node = Switch(switchVar,cases);
+        <span class="keyword">case</span> <span class="string">'TRANS'</span>
+            operand  = createLeftTree(index,table,strings,inputString);
+            node = Trans(operand);
+        <span class="keyword">case</span> <span class="string">'TRY'</span>
+            tryBlock  = StatementBlock(createList(table(index,2),table,strings,inputString));
+            catchNode = table(index,3);
+            errorName  = createLeftTree(catchNode,table,strings,inputString);
+            catchBlock = StatementBlock(createList(table(catchNode,3),table,strings,inputString));
+            node = Try(tryBlock,errorName,catchBlock);
+        <span class="keyword">case</span> <span class="string">'UMINUS'</span>
+            operand  = createLeftTree(index,table,strings,inputString);
+            node = UnaryOperator(nodeType,operand);
+        <span class="keyword">case</span> <span class="string">'WHILE'</span>
+            condition = createLeftTree(index,table,strings,inputString);
+            loopBody = StatementBlock(createList(table(index,3),table,strings,inputString));
+            node = While(condition,loopBody);
+        <span class="keyword">case</span> <span class="string">'ERR'</span>
+            <span class="comment">% fprintf('A syntax error was found while parsing the string.\n');</span>
+            node = Junk(nodeType,<span class="string">'Syntax Error'</span>);
+        <span class="keyword">otherwise</span>
+            first = table(index,11);
+            last = table(index,12);
+            <span class="keyword">if</span>(first &gt; 0)
+                code = inputString(first: last);
+            <span class="keyword">else</span>
+                code = <span class="string">'code unknown'</span>;
+            <span class="keyword">end</span>
+            node = Junk(nodeType,code);
+            fprintf(<span class="string">'parseString has encountered a type of node it does not understand.\n'</span>);
+            fprintf(<span class="string">'Unhandled Node Type: %s\n'</span>,nodeType);
+            fprintf(<span class="string">'Here is (some of) the code where the problem occurred:\n'</span>);
+            fprintf(<span class="string">'%s\n'</span>,code(1:min(200,end)));
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="keyword">function</span> leftNode = createLeftTree(index,table,strings,inputString)
+    <span class="keyword">if</span>(table(index,2) == 0)
+        leftNode = [];
+    <span class="keyword">else</span>
+        leftNode = createTree(table(index,2),table,strings,inputString);
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="keyword">function</span> rightNode = createRightTree(index,table,strings,inputString)
+    <span class="keyword">if</span>(table(index,3) == 0)
+        rightNode = [];
+    <span class="keyword">else</span>
+        rightNode = createTree(table(index,3),table,strings,inputString);
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="keyword">function</span> nodes = createList(index,table,strings,inputString)
+    nodes = {};
+    <span class="keyword">while</span> index ~= 0
+        nodes{end+1} = createTree(index,table,strings,inputString);
+        index = table(index,4);
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre><pre class="codeoutput error">Error using parseString (line 25)
+Not enough input arguments.
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2014b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+function node = parseString( inputString )
+    % This file understands the structure of the mtreemex table and the
+    % construction syntax of allof the parse tree node types.
+    
+    parseLibrary = 'ParseTree;';
+    if isempty(strfind(path,parseLibrary))
+        addpath(parseLibrary);
+    end
+    
+    global nodeNames
+    if(isempty(nodeNames))
+        nodeNames = mtreemex;
+    end
+    
+    % Table column meanings
+    % 1 = node type
+    % 2 = left child
+    % 3 = right child
+    % 4 = next
+    % 8 = index into strings
+    % 11 = start index in inputString
+    % 12 = end index in inputString
+    
+    % chew on a row so comments don't need to be transposed
+    if iscolumn(inputString)
+        inputString = inputString';
+    end
+    
+    [table,~,strings] = mtreemex(inputString,'-comments','-whitespace');
+    
+    list = createList(1,table,strings,inputString);
+    if 1 == length(list)
+        node = list{1};
+    else
+        node = StatementBlock(list);
+    end
+    
+end
+
+function node = createTree(index,table,strings,inputString)
+    global nodeNames
+    
+    nodeType = nodeNames{table(index,1)};
+    switch nodeType
+        case {'AND','ANDAND','OR','OROR','DIV','MUL','PLUS','MINUS','EXP','DOTMUL','DOTEXP'}
+            leftOperand  = createLeftTree(index,table,strings,inputString);
+            rightOperand = createRightTree(index,table,strings,inputString);
+            node = BinaryOperator(nodeType,leftOperand,rightOperand);
+        case 'ANON'
+            ids  = CommaSeperatedList(createList(table(index,2),table,strings,inputString));
+            expression = createRightTree(index,table,strings,inputString);
+            node = AnonymousFunctionDefinition(ids,expression);
+        case 'ANONID'
+            text = inputString(table(index,11): table(index,12))';
+            node = Literal('ID',text);
+        case 'AT'
+            name = createLeftTree(index,table,strings,inputString);
+            node = At(name);
+        case 'ATTR'
+            attributeName = createLeftTree(index,table,strings,inputString);
+            attributeValue = createRightTree(index,table,strings,inputString);
+            node = Attribute(attributeName,attributeValue);
+        case 'ATTRIBUTES'
+            node = CommaSeperatedList(createList(table(index,2),table,strings,inputString));
+        case 'BLKCOM'
+            text = inputString(table(index,11): table(index,12))';
+            node = BlockComment(text);
+        case 'BREAK'
+            node = Break;
+        case 'CALL'
+            name = createLeftTree(index,table,strings,inputString);
+            inputs = CommaSeperatedList(createList(table(index,3),table,strings,inputString));
+            node = FunctionCall(name,inputs);
+        case {'CASE','OTHERWISE'}
+            name = createLeftTree(index,table,strings,inputString);
+            body = StatementBlock(createList(table(index,3),table,strings,inputString));
+            node = Case(name,body);
+        case 'CATCH'
+            node = Junk('catch',[]);
+        case 'CELL'
+            var  = createLeftTree(index,table,strings,inputString);
+            contents = CommaSeperatedList(createList(table(index,3),table,strings,inputString));
+            node = CellArray(var, contents);
+        case 'CLASSDEF'
+            cexpr = table(index,2);
+            classNames = createRightTree(cexpr,table,strings,inputString);
+            blocks = StatementBlock(createList(table(index,3),table,strings,inputString));
+            node = ClassDef(classNames,blocks);
+        case 'COLON'
+            leftNode  = createLeftTree(index,table,strings,inputString);
+            rightNode = createRightTree(index,table,strings,inputString);
+            node = ColonOperator(leftNode,rightNode);
+        case 'COMMENT'
+            text = inputString(table(index,11): table(index,12));
+            node = Comment(text);
+        case 'CONTINUE'
+            node = Continue;
+        case 'DCALL'
+            name = createLeftTree(index,table,strings,inputString);
+            args = CommaSeperatedList(createList(table(index,3),table,strings,inputString));
+            node = Command(name,args);
+        case 'DOT'
+            leftNode  = createLeftTree(index,table,strings,inputString);
+            rightNode = createRightTree(index,table,strings,inputString);
+            node = Dot(leftNode,rightNode);
+        case 'DOTLP'
+            name  = createLeftTree(index,table,strings,inputString);
+            contents = CommaSeperatedList(createList(table(index,3),table,strings,inputString));
+            node = DotLP(name,contents);
+        case {'EXPR','PARENS'}
+            % expr is a tofu node. We simply move on to its only child node
+            node = createLeftTree(index,table,strings,inputString);
+        case 'EQUALS'
+            leftHandSide  = createLeftTree(index,table,strings,inputString);
+            rightHandSide = createRightTree(index,table,strings,inputString);
+            node = AssignmentStatement(leftHandSide,rightHandSide);
+        case 'FIELD'
+            node = Field(Literal('FIELD',strings{table(index,8)}));
+        case 'FOR'
+            loop = table(index,2);
+            loopVar = createLeftTree(loop,table,strings,inputString);
+            loopRange = createRightTree(loop,table,strings,inputString);
+            loopBody = StatementBlock(createList(table(index,3),table,strings,inputString));
+            node = ForLoop(loopVar,loopRange,loopBody);
+        case 'FUNCTION'
+            headerEtc = table(index,2);
+            outputs  = CommaSeperatedList(createList(table(headerEtc,2),table,strings,inputString));
+            inputEtc = table(headerEtc,3);
+            name   = createLeftTree(inputEtc,table,strings,inputString);
+            inputs = CommaSeperatedList(createList(table(inputEtc,3),table,strings,inputString));
+            body    = StatementBlock(createList(table(index,3),table,strings,inputString));
+            node = FunctionDefinition(name,outputs,inputs,body);
+        case 'GLOBAL'
+            varNames = CommaSeperatedList(createList(table(index,2),table,strings,inputString));
+            node = Global(varNames);
+        case 'IF'
+            ifBlocks = StatementBlock(createList(table(index,2),table,strings,inputString));
+            node = IfStatement(ifBlocks);
+        case {'IFHEAD','ELSE','ELSEIF'}
+            condition  = createLeftTree(index,table,strings,inputString);
+            body = StatementBlock(createList(table(index,3),table,strings,inputString));
+            node = IfBlock(condition,body);
+        case {'INT','ID','STRING','DOUBLE'}
+            node = Literal(nodeType,strings{table(index,8)});
+        case {'LB','LC','LP'}
+            contents  = CommaSeperatedList(createList(table(index,2),table,strings,inputString));
+            node = Catenation(nodeType,contents);
+        case {'LT','GT','LE','GE','EQ','NE'}
+            leftOperand  = createLeftTree(index,table,strings,inputString);
+            rightOperand = createRightTree(index,table,strings,inputString);
+            node = Compare(nodeType,leftOperand,rightOperand);
+        case 'METHODS'
+            attributes = createLeftTree(index,table,strings,inputString);
+            contents = StatementBlock(createList(table(index,3),table,strings,inputString));
+            node = Methods(attributes,contents);
+        case 'NOT'
+            if(0 == table(index,2));
+                node = Literal('NOT','~');
+            else
+                operand  = createLeftTree(index,table,strings,inputString);
+                node = UnaryOperator(nodeType,operand);
+            end
+        case 'PERSISTENT'
+            varNames = CommaSeperatedList(createList(table(index,2),table,strings,inputString));
+            node = Persistent(varNames);
+        case 'PRINT'
+            statement  = createLeftTree(index,table,strings,inputString);
+            node = AutoPrint(statement);
+        case 'PROPERTIES'
+            attributes = createLeftTree(index,table,strings,inputString);
+            contents = StatementBlock(createList(table(index,3),table,strings,inputString));
+            node = Properties(attributes,contents);
+        case 'PROTO'
+            headerEtc = table(index,2);
+            outputs  = CommaSeperatedList(createList(table(headerEtc,2),table,strings,inputString));
+            inputEtc = table(headerEtc,3);
+            name   = createLeftTree(inputEtc,table,strings,inputString);
+            inputs = CommaSeperatedList(createList(table(inputEtc,3),table,strings,inputString));
+            body    = [];
+            node = FunctionDefinition(name,outputs,inputs,body);
+        case 'RETURN'
+            node = Return;
+        case 'ROW'
+            node  = CommaSeperatedList(createList(table(index,2),table,strings,inputString));
+        case 'SUBSCR'
+            varName    = createLeftTree(index,table,strings,inputString);
+            subscripts = CommaSeperatedList(createList(table(index,3),table,strings,inputString));
+            node = Subscript(varName,subscripts);
+        case 'SWITCH'
+            switchVar = createLeftTree(index,table,strings,inputString);
+            cases = StatementBlock(createList(table(index,3),table,strings,inputString));
+            node = Switch(switchVar,cases);
+        case 'TRANS'
+            operand  = createLeftTree(index,table,strings,inputString);
+            node = Trans(operand);
+        case 'TRY'
+            tryBlock  = StatementBlock(createList(table(index,2),table,strings,inputString));
+            catchNode = table(index,3);
+            errorName  = createLeftTree(catchNode,table,strings,inputString);
+            catchBlock = StatementBlock(createList(table(catchNode,3),table,strings,inputString));
+            node = Try(tryBlock,errorName,catchBlock);
+        case 'UMINUS'
+            operand  = createLeftTree(index,table,strings,inputString);
+            node = UnaryOperator(nodeType,operand);
+        case 'WHILE'
+            condition = createLeftTree(index,table,strings,inputString);
+            loopBody = StatementBlock(createList(table(index,3),table,strings,inputString));
+            node = While(condition,loopBody);
+        case 'ERR'
+            % fprintf('A syntax error was found while parsing the string.\n');
+            node = Junk(nodeType,'Syntax Error');
+        otherwise
+            first = table(index,11);
+            last = table(index,12);
+            if(first > 0)
+                code = inputString(first: last);
+            else
+                code = 'code unknown';
+            end
+            node = Junk(nodeType,code);
+            fprintf('parseString has encountered a type of node it does not understand.\n');
+            fprintf('Unhandled Node Type: %s\n',nodeType);
+            fprintf('Here is (some of) the code where the problem occurred:\n');
+            fprintf('%s\n',code(1:min(200,end)));
+    end
+end
+
+function leftNode = createLeftTree(index,table,strings,inputString)
+    if(table(index,2) == 0)
+        leftNode = [];
+    else
+        leftNode = createTree(table(index,2),table,strings,inputString);
+    end
+end
+
+function rightNode = createRightTree(index,table,strings,inputString)
+    if(table(index,3) == 0)
+        rightNode = [];
+    else
+        rightNode = createTree(table(index,3),table,strings,inputString);
+    end
+end
+
+function nodes = createList(index,table,strings,inputString)
+    nodes = {};
+    while index ~= 0
+        nodes{end+1} = createTree(index,table,strings,inputString);
+        index = table(index,4);
+    end
+end
+##### SOURCE END #####
+--></body></html>
